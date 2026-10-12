@@ -1,0 +1,38 @@
+name: OpenQodex
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: openqodex/openqodex@9c4d516a15954ba3ed648fe1177038c92fb8f884 # v0.12.0
+        id: openqodex
+        with:
+          version: 0.12.0
+          upload-sarif: false
+      - name: Upload OpenQodex report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: openqodex-report
+          path: |
+            ${{ runner.temp }}/**/*.sarif
+            ${{ runner.temp }}/**/report*.md
+          if-no-files-found: warn
+          retention-days: 7
+      - name: OpenQodex outputs
+        if: always()
+        run: |
+          echo "status=${{ steps.openqodex.outputs.status }}"
+          echo "reviewed=${{ steps.openqodex.outputs.reviewed }}"
+          echo "review-status=${{ steps.openqodex.outputs.review-status }}"
